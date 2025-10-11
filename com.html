@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ICFAI Election Commissioner</title>
+  <style>
+    :root{
+      --bg:#071028; --card:#0b1220; --muted:#9aa7bf; --accent:#5eead4; --accent-2:#60a5fa;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#04101d 0%,#061226 60%);color:#eaf4ff}
+    .wrap{max-width:1100px;margin:40px auto;padding:22px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#04263b}
+    h1{margin:0;font-size:20px}
+    .lead{color:var(--muted);margin-top:6px;font-size:13px}
+    .login-area{max-width:460px;margin:18px 0;padding:14px;border-radius:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text], input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#04263b}
+    .muted{color:var(--muted);font-size:13px}
+    .hidden{display:none}
+    .layout{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-top:14px}
+    nav{background:var(--card);padding:14px;border-radius:12px}
+    .nav-item{padding:12px;border-radius:10px;color:var(--accent);cursor:pointer;margin-bottom:8px}
+    .nav-item.inactive{color:var(--muted);background:transparent}
+    .panel{background:var(--card);padding:16px;border-radius:12px}
+    .form-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;margin-top:10px}
+    .field-list{display:flex;flex-direction:column;gap:8px}
+    .field-entry{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
+    .small{font-size:12px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">IC</div>
+      <div>
+        <h1>ICFAI Election Commissioner</h1>
+        <div class="lead">Enter the password to access the Commissioner dashboard.</div>
+      </div>
+    </header>
+
+    <!-- LOGIN CARD -->
+    <div id="loginCard" class="card login-area">
+      <label>Username</label>
+      <input id="username" type="text" value="ICFAI Election Commissioner" readonly />
+
+      <label style="margin-top:12px">Password</label>
+      <input id="password" type="password" placeholder="Enter password" />
+
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+        <button class="btn primary" onclick="attemptLogin()">Enter</button>
+        <div class="small">Password is a 6-digit code.</div>
+      </div>
+      <div id="loginMsg" class="small" style="color:#ffb4b4;margin-top:10px;display:none"></div>
+    </div>
+
+    <!-- DASHBOARD (hidden until login) -->
+    <div id="dashboard" class="hidden">
+      <div class="layout">
+        <nav class="card">
+          <div id="navConduct" class="nav-item" onclick="showPanel('conduct')">Conduct Election</div>
+          <div id="navResults" class="nav-item inactive" onclick="showPanel('results')">Past Election Results</div>
+          <div style="height:8px"></div>
+          <div class="small">Tip: toggles on the right control what voter details are collected.</div>
+        </nav>
+
+        <main class="panel">
+          <!-- Conduct -->
+          <section id="panelConduct">
+            <h2 style="margin:0 0 8px 0">Conduct Election</h2>
+            <div class="form-grid">
+              <div class="card">
+                <label>Election Title</label>
+                <input id="title" type="text" placeholder="e.g., Student Council 2025" />
+
+                <label style="margin-top:8px">Start Time</label>
+                <input id="start" type="datetime-local" />
+
+                <label style="margin-top:8px">End Time</label>
+                <input id="end" type="datetime-local" />
+
+                <label style="margin-top:8px">Description</label>
+                <input id="desc" type="text" placeholder="Short description (optional)" />
+
+                <div style="margin-top:12px;display:flex;gap:10px">
+                  <button class="btn primary" onclick="createElection()">Create & Start</button>
+                  <button class="btn" onclick="resetForm()">Reset</button>
+                </div>
+                <div class="small" style="margin-top:10px;color:var(--muted)">This demo stores nothing permanently — it's a front-end simulation for your presentation.</div>
+              </div>
+
+              <aside class="card">
+                <h4 style="margin:0 0 8px 0">Voter Fields (enable / disable)</h4>
+                <div id="fieldList" class="field-list"></div>
+                <div style="margin-top:10px" class="small">Preview of active fields:</div>
+                <div id="preview" class="card small" style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.02)">No fields enabled</div>
+              </aside>
+            </div>
+          </section>
+
+          <!-- Results -->
+          <section id="panelResults" style="display:none">
+            <h2 style="margin:0 0 8px 0">Past Election Results</h2>
+            <table>
+              <thead><tr><th>Position</th><th>Candidate</th><th>Votes</th></tr></thead>
+              <tbody id="resultsBody">
+                <!-- filled by JS -->
+              </tbody>
+            </table>
+            <div style="margin-top:12px">
+              <button class="btn primary" onclick="loadSampleResults()">Load Sample Data</button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // fixed password required to enter
+    const REQUIRED_PASSWORD = '200721';
+
+    function attemptLogin(){
+      const pw = document.getElementById('password').value.trim();
+      const msg = document.getElementById('loginMsg');
+      if(pw === REQUIRED_PASSWORD){
+        // success
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('dashboard').classList.remove('hidden');
+        msg.style.display = 'none';
+        // initialize UI
+        initFieldToggles();
+        loadSampleResults();
+        // clear password for security
+        document.getElementById('password').value = '';
+      } else {
+        msg.style.display = 'block';
+        msg.innerText = 'Incorrect password. Try again.';
+      }
+    }
+
+    // Basic nav
+    function showPanel(k){
+      document.getElementById('panelConduct').style.display = k === 'conduct' ? 'block' : 'none';
+      document.getElementById('panelResults').style.display = k === 'results' ? 'block' : 'none';
+      document.getElementById('navConduct').classList.toggle('inactive', k !== 'conduct');
+      document.getElementById('navResults').classList.toggle('inactive', k !== 'results');
+    }
+
+    // Voter fields toggles
+    const fields = [
+      {id:'full_name', label:'Full Name', enabled:true, required:true},
+      {id:'father_name', label:"Father's Name", enabled:false, required:false},
+      {id:'mother_name', label:"Mother's Name", enabled:false, required:false},
+      {id:'aadhar', label:'Aadhar Number', enabled:false, required:false},
+      {id:'passport', label:'Passport Number', enabled:false, required:false},
+      {id:'ration', label:'Ration Card Number', enabled:false, required:false}
+    ];
+
+    function initFieldToggles(){
+      const list = document.getElementById('fieldList');
+      list.innerHTML = '';
+      fields.forEach((f, i) => {
+        const el = document.createElement('div');
+        el.className = 'field-entry';
+        el.innerHTML = `<div><strong>${f.label}</strong><div class="small">${f.required? 'Required' : 'Optional'}</div></div>
+          <div>
+            <label class="small"><input type="checkbox" ${f.enabled ? 'checked' : ''} data-i="${i}" onchange="toggleField(event)" /> Enabled</label>
+          </div>`;
+        list.appendChild(el);
+      });
+      renderPreview();
+    }
+
+    function toggleField(e){
+      const i = Number(e.target.dataset.i);
+      fields[i].enabled = e.target.checked;
+      renderPreview();
+    }
+
+    function renderPreview(){
+      const active = fields.filter(f=>f.enabled);
+      const p = document.getElementById('preview');
+      if(active.length === 0){
+        p.innerHTML = 'No fields enabled';
+        return;
+      }
+      p.innerHTML = active.map(f => `<div><strong>${f.label}</strong> ${f.required ? '<span class="small" style="color:var(--accent-2)"> (Required)</span>' : '<span class="small"> (Optional)</span>'}</div>`).join('');
+    }
+
+    // create election (demo)
+    function createElection(){
+      const title = document.getElementById('title').value || 'Untitled Election';
+      const start = document.getElementById('start').value || 'N/A';
+      const end = document.getElementById('end').value || 'N/A';
+      alert(`Election "${title}" created (demo). Start: ${start} — End: ${end}\nCollected fields: ${fields.filter(f=>f.enabled).map(f=>f.label).join(', ')}`);
+    }
+
+    function resetForm(){
+      document.getElementById('title').value = '';
+      document.getElementById('start').value = '';
+      document.getElementById('end').value = '';
+      document.getElementById('desc').value = '';
+    }
+
+    // sample results
+    function loadSampleResults(){
+      const sample = [
+        {pos:'President', cand:'Alice', votes:340},
+        {pos:'President', cand:'Bob', votes:220},
+        {pos:'Representative', cand:'Charlie', votes:210},
+        {pos:'Representative', cand:'Diana', votes:150}
+      ];
+      const body = document.getElementById('resultsBody');
+      body.innerHTML = '';
+      sample.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${s.pos}</td><td>${s.cand}</td><td>${s.votes}</td>`;
+        body.appendChild(tr);
+      });
+    }
+
+    // start with login visible
+    showPanel('conduct');
+  </script>
+</body>
+</html>
