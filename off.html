@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Commissioner — Election Control</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa7bf; --accent:#5eead4; --accent-2:#60a5fa;
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071028 0%, #081126 60%);color:#e6eef8}
+    .container{max-width:1100px;margin:36px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    header{display:flex;align-items:center;gap:16px}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#04263b}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 18px;color:var(--muted);font-size:13px}
+
+    .layout{display:grid;grid-template-columns:260px 1fr;gap:20px}
+    nav{background:var(--card);padding:14px;border-radius:12px}
+    .nav-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;color:var(--accent);cursor:pointer}
+    .nav-item.inactive{color:var(--muted);background:transparent}
+    .nav-item:hover{background:var(--glass)}
+    .nav-item.active{background:linear-gradient(90deg, rgba(94,234,212,0.08), rgba(96,165,250,0.05));box-shadow:inset 0 0 0 1px rgba(96,165,250,0.03)}
+    .small{font-size:12px;color:var(--muted)}
+
+    main{background:var(--card);padding:18px;border-radius:12px;min-height:420px}
+    .panel-title{display:flex;align-items:center;justify-content:space-between}
+    .panel-title h2{margin:0;font-size:16px}
+
+    /* Conduct Election form */
+    .form-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;margin-top:14px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=text], input[type=datetime-local], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+    textarea{min-height:120px}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:10px}
+    .toggle{display:inline-grid;grid-auto-flow:column;gap:8px;align-items:center}
+    .switch{width:42px;height:24px;border-radius:20px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer}
+    .switch .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .18s}
+    .switch.on{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .switch.on .knob{left:21px;background:#05222b}
+
+    .field-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .field-entry{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
+
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#04263b}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    /* Small responsive */
+    @media (max-width:900px){.layout{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.nav-item .badge{display:none}}
+
+    /* Past Results */
+    .results-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .results-table th, .results-table td{padding:10px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    .bar{height:10px;border-radius:6px;background:rgba(255,255,255,0.05);overflow:hidden}
+    .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+
+    .muted-note{font-size:13px;color:var(--muted);margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">EC</div>
+      <div style="flex:1">
+        <h1>Commissioner Dashboard</h1>
+        <p class="lead">Control the election and view past election results. This demo simulates required voter fields which you can toggle on/off.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--muted)">Portal</div>
+          <div style="font-weight:700">ICFAI Election Commissioner Portal</div>
+        </div>
+        <div>
+          <button class="btn" onclick="showCommLogin()" id="commLoginBtn">Login</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav>
+        <div id="navConduct" class="nav-item active" onclick="switchPanel('conduct')">
+          <div>
+            <strong>Conduct Election</strong>
+            <div class="small">Create and configure an election</div>
+          </div>
+          <div class="small">Live</div>
+        </div>
+
+        <div id="navResults" class="nav-item inactive" onclick="switchPanel('results')">
+          <div>
+            <strong>Past Election Results</strong>
+            <div class="small">View historic counts & exports</div>
+          </div>
+          <div class="small">Archive</div>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="small muted-note">Tip: Toggle the required fields on the right to include/exclude them from voter registration for this election.</div>
+      </nav>
+
+      <main>
+        <!-- Conduct Panel -->
+        <section id="panel-conduct">
+          <div class="panel-title">
+            <h2>Conduct Election</h2>
+            <div class="small">Define election details and configure which fields to collect from voters.</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="card">
+              <label for="title">Election Title</label>
+              <input id="title" type="text" placeholder="e.g., Student Council 2025" />
+
+              <label for="start">Start Time</label>
+              <input id="start" type="datetime-local" />
+
+              <label for="end">End Time</label>
+              <input id="end" type="datetime-local" />
+
+              <label for="description">Description (optional)</label>
+              <textarea id="description" placeholder="Short description of this election"></textarea>
+
+              <div class="actions">
+                <button class="btn primary" onclick="createAndStart()">Create & Start</button>
+                <button class="btn ghost" onclick="resetForm()">Reset</button>
+                <button class="btn ghost" onclick="showChangePassword()" id="changePassBtn" style="display:none">Change Password</button>
+              </div>
+
+              <div class="muted-note">Note: In a real system these inputs would be validated and stored in a secure database. This demo focuses on form configuration.</div>
+            </div>
+
+            <aside class="card">
+              <h3 style="margin-top:0">Voter Fields (toggle on/off)</h3>
+
+              <div class="field-list" id="fieldList">
+                <!-- Each entry: label, toggle, preview -->
+              </div>
+
+              <div style="margin-top:12px">
+                <label class="small">Preview: Active fields shown to voter</label>
+                <div id="previewBox" class="card" style="margin-top:8px;padding:12px;background:rgba(255,255,255,0.02);">
+                  <div id="previewContent" class="small muted-note">No fields enabled</div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- Results Panel -->
+        <section id="panel-results" style="display:none">
+          <div class="panel-title">
+            <h2>Past Election Results</h2>
+            <div class="small">Browse archived election vote counts and export CSV.</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <table class="results-table">
+              <thead>
+                <tr><th>Position</th><th>Candidate</th><th>Votes</th><th style="width:40%">Share</th></tr>
+              </thead>
+              <tbody id="resultsBody">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+
+            <div class="actions">
+              <button class="btn primary" onclick="exportCSV()">Export CSV</button>
+              <button class="btn ghost" onclick="loadSampleResults()">Load Sample Data</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Simple modal -->
+  <div id="modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6)">
+    <div style="width:640px;max-width:94%;">
+      <div class="card" id="modalCard">
+        <div id="modalContent"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+          <button class="btn" onclick="closeModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // initial field definitions
+    const fields = [
+      {id:'full_name', label:'Full Name', enabled:true, required:true},
+      {id:'father_name', label:"Father's Name", enabled:false, required:false},
+      {id:'mother_name', label:"Mother's Name", enabled:false, required:false},
+      {id:'aadhar', label:'Aadhar Number', enabled:false, required:false},
+      {id:'passport', label:'Passport Number', enabled:false, required:false},
+      {id:'ration', label:'Ration Card Number', enabled:false, required:false}
+    ];
+
+    // Commissioner demo credentials and simple client-side auth (presentation only)
+    const commissionerCreds = { username: 'ICFAI', password: 'comm123' };
+    let commissionerLoggedIn = false;
+
+    function showCommLogin(){
+      const html = `
+        <h3>Commissioner Login</h3>
+        <label>Username</label>
+        <input id="commUser" type="text" value="${commissionerCreds.username}" />
+        <label style="margin-top:8px">Password</label>
+        <input id="commPass" type="password" value="${commissionerCreds.password}" />
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn primary" onclick="doCommLogin()">Login</button>
+          <button class="btn" onclick="closeModal()">Cancel</button>
+        </div>
+        <div class="small muted-note">Demo creds shown for presentation. In production, never store credentials client-side.</div>
+      `;
+      showModal(html);
+    }
+
+    function doCommLogin(){
+      const u = document.getElementById('commUser').value.trim();
+      const p = document.getElementById('commPass').value.trim();
+      if(u === commissionerCreds.username && p === commissionerCreds.password){
+        commissionerLoggedIn = true;
+        document.getElementById('commLoginBtn').innerText = 'Logged in';
+        document.getElementById('changePassBtn').style.display = 'inline-block';
+        closeModal();
+        alert('Commissioner logged in (demo). You can now create and start elections.');
+        writeAudit('comm_login', `Commissioner ${u} logged in`);
+      } else {
+        alert('Invalid commissioner credentials (demo)');
+      }
+    }
+
+    function requireCommAuth(){
+      if(!commissionerLoggedIn){ alert('Please login as Commissioner to perform this action.'); return false; }
+      return true;
+    }
+
+    // change password function
+    function showChangePassword(){
+      const html = `
+        <h3>Change Commissioner Password</h3>
+        <label>Current Password</label>
+        <input id="curPass" type="password" />
+        <label style="margin-top:8px">New Password</label>
+        <input id="newPass" type="password" />
+        <label style="margin-top:8px">Confirm New Password</label>
+        <input id="confPass" type="password" />
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn primary" onclick="changeCommPassword()">Change Password</button>
+          <button class="btn" onclick="closeModal()">Cancel</button>
+        </div>
+      `;
+      showModal(html);
+    }
+
+    function changeCommPassword(){
+      const cur = document.getElementById('curPass').value;
+      const nw = document.getElementById('newPass').value;
+      const cf = document.getElementById('confPass').value;
+      if(cur !== commissionerCreds.password){ alert('Current password incorrect'); return }
+      if(nw.length < 4){ alert('New password too short'); return }
+      if(nw !== cf){ alert('Password confirmation does not match'); return }
+      commissionerCreds.password = nw;
+      alert('Password changed (demo).');
+      writeAudit('comm_change_password', 'Commissioner changed password');
+      closeModal();
+    }
+
+    function showModal(html){
+      document.getElementById('modalContent').innerHTML = html;
+      document.getElementById('modal').style.display='flex';
+    }
+    function closeModal(){ document.getElementById('modal').style.display='none'; }
+
+    function renderFieldList(){
+      const list = document.getElementById('fieldList');
+      list.innerHTML='';
+      fields.forEach((f,idx)=>{
+        const div = document.createElement('div');
+        div.className='field-entry';
+        div.innerHTML = `
+          <div style="flex:1">
+            <div style="font-weight:600">${f.label}</div>
+            <div class="small">${f.enabled? 'Included' : 'Excluded'} • ${f.required? 'Required' : 'Optional'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <div class="toggle">
+              <div class="switch ${f.enabled? 'on' : ''}" data-idx="${idx}" onclick="toggleEnabled(${idx}, event)"><span class="knob"></span></div>
+            </div>
+            <label style="font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center">
+              <input type="checkbox" ${f.required? 'checked' : ''} onchange="toggleRequired(${idx}, event)" /> Required
+            </label>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      renderPreview();
+    }
+
+    function toggleEnabled(i,e){
+      fields[i].enabled = !fields[i].enabled;
+      renderFieldList();
+      e.stopPropagation();
+    }
+    function toggleRequired(i,e){
+      fields[i].required = e.target.checked;
+      renderFieldList();
+    }
+
+    function renderPreview(){
+      const preview = document.getElementById('previewContent');
+      const active = fields.filter(f=>f.enabled);
+      if(active.length===0){ preview.innerHTML='No fields enabled'; return }
+      preview.innerHTML = active.map(f=>`<div style="margin-bottom:6px"><strong>${f.label}</strong> ${f.required? '<span style="color:var(--accent);font-weight:600;margin-left:8px">(Required)</span>' : '<span style="color:var(--muted);margin-left:8px">(Optional)</span>'}</div>`).join('');
+    }
+
+    // Navigation
+    function switchPanel(key){
+      document.getElementById('panel-conduct').style.display = key==='conduct'? 'block' : 'none';
+      document.getElementById('panel-results').style.display = key==='results'? 'block' : 'none';
+      document.getElementById('navConduct').classList.toggle('active', key==='conduct');
+      document.getElementById('navConduct').classList.toggle('inactive', key!=='conduct');
+      document.getElementById('navResults').classList.toggle('active', key==='results');
+      document.getElementById('navResults').classList.toggle('inactive', key!=='results');
+    }
+
+    // create & start election (requires commissioner auth in demo)
+    function createAndStart(){
+      if(!requireCommAuth()) return;
+      const title = document.getElementById('title').value || 'Untitled Election';
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+      writeAudit('create_election', `Created election \"${title}\" (${start} -> ${end}) with fields: ${fields.filter(f=>f.enabled).map(f=>f.label).join(', ')}`);
+      alert('Election \"'+title+'\" created & started (demo).');
+    }
+
+    function saveElection(){
+      // kept for backward compatibility (some buttons still call this in older versions)
+      createAndStart();
+    }
+
+    function resetForm(){
+      document.getElementById('title').value='';
+      document.getElementById('start').value='';
+      document.getElementById('end').value='';
+      document.getElementById('description').value='';
+    }
+
+    // Sample results functions
+    function loadSampleResults(){
+      const sample = [
+        {pos:'President', cand:'Alice', votes:340},{pos:'President', cand:'Bob', votes:220},
+        {pos:'Representative', cand:'Charlie', votes:210},{pos:'Representative', cand:'Diana', votes:150}
+      ];
+      const body = document.getElementById('resultsBody');
+      body.innerHTML='';
+      const max = Math.max(...sample.map(s=>s.votes));
+      sample.forEach(s=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${s.pos}</td><td>${s.cand}</td><td>${s.votes}</td><td><div class="bar"><i style="width:${(s.votes/max*100)}%"></i></div></td>`;
+        body.appendChild(tr);
+      });
+    }
+
+    function exportCSV(){
+      alert('Export CSV (demo) — in real app this would download the archived results.');
+    }
+
+    // Simple audit log (client-side)
+    const auditLog = [];
+    function writeAudit(action, details){
+      auditLog.unshift({time:new Date().toLocaleString(), action, details});
+      console.log('[AUDIT]', action, details);
+    }
+
+    // init
+    renderFieldList();
+    loadSampleResults();
+  </script>
+</body>
+</html>
