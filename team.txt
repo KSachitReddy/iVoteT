@@ -1,0 +1,5 @@
+Captain   : Madhavaram Jaswanth
+Call Sign : MAJ
+
+Co-Captain : Kommera Sachit Reddy
+Call Sign  : KomRed
